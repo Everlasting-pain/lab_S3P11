@@ -226,6 +226,69 @@ void deleteAccount(Account*& arr, int& n) {
     cout << "Счёт " << id << " удалён." << endl;
 }
 
+void calculations(const Account* arr, int n) {
+    if (n == 0) {
+        cout << "Данных нет." << endl;
+        return;
+    }
+    const string cur[3] = {"RUB", "USD", "EUR"};
+    double sum[3] = {0, 0, 0};
+    double rateSum = 0;
+    int depCount = 0;
+    int maxI = 0;
+
+    cout << fixed << setprecision(2);
+    cout << "Доход по вкладам:" << endl;
+    for (int i = 0; i < n; i++) {
+        for (int c = 0; c < 3; c++) {
+            if (arr[i].currency == cur[c]) sum[c] += arr[i].balance;
+        }
+        if (arr[i].balance > arr[maxI].balance) maxI = i;
+        if (arr[i].type == "Deposit") {
+            rateSum += arr[i].rate;
+            depCount++;
+            double income = arr[i].balance * arr[i].rate / 100 * arr[i].term / 12;
+            cout << "  ID " << arr[i].id << " " << arr[i].owner << ": "
+                 << income << " " << arr[i].currency << endl;
+        }
+    }
+    if (depCount == 0) cout << "  вкладов нет" << endl;
+
+    cout << "Сумма балансов по валютам:" << endl;
+    for (int c = 0; c < 3; c++) {
+        cout << "  " << cur[c] << ": " << sum[c] << endl;
+    }
+    if (depCount > 0) {
+        cout << "Средняя ставка по вкладам: " << rateSum / depCount << "%" << endl;
+    }
+    cout << "Наибольший баланс: ID " << arr[maxI].id << " " << arr[maxI].owner
+         << " - " << arr[maxI].balance << " " << arr[maxI].currency << endl;
+}
+
+void saveToFile(const Account* arr, int n) {
+    string filename = readLine("Имя файла для сохранения: ");
+    if (filename.empty()) {
+        cout << "Имя файла не введено." << endl;
+        return;
+    }
+    ofstream fout(filename);
+    if (!fout) {
+        cout << "Не удалось создать файл " << filename << endl;
+        return;
+    }
+    for (int i = 0; i < n; i++) {
+        fout << arr[i].id << ';'
+             << arr[i].owner << ';'
+             << arr[i].type << ';'
+             << arr[i].currency << ';'
+             << arr[i].balance << ';'
+             << arr[i].rate << ';'
+             << arr[i].term << endl;
+    }
+    fout.close();
+    cout << "Сохранено записей: " << n << " в файл " << filename << endl;
+}
+
 int main() {
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
@@ -240,6 +303,8 @@ int main() {
              << "2. Изменить запись" << endl
              << "3. Добавить запись" << endl
              << "4. Удалить запись" << endl
+             << "5. Вычисления" << endl
+             << "6. Сохранить в новый файл" << endl
              << "0. Выход" << endl;
         int choice = readInt("Ваш выбор: ");
 
@@ -248,11 +313,16 @@ int main() {
             case 2: editAccount(accounts, n); break;
             case 3: addAccount(accounts, n); break;
             case 4: deleteAccount(accounts, n); break;
-            case 0:
+            case 5: calculations(accounts, n); break;
+            case 6: saveToFile(accounts, n); break;
+            case 0: {
+                string ans = readLine("Сохранить данные перед выходом? (y/n): ");
+                if (ans == "y" || ans == "Y") saveToFile(accounts, n);
                 delete[] accounts;
                 accounts = nullptr;
                 cout << "До свидания!" << endl;
                 return 0;
+            }
             default:
                 cout << "Нет такого пункта." << endl;
         }

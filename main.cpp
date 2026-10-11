@@ -7,20 +7,20 @@
 using namespace std;
 
 struct Account {
-    int id;            
-    string owner;      
-    string type;       
-    string currency;   
-    double balance;    
-    float rate;        
-    int term;          
+    int id;
+    string owner;
+    string type;
+    string currency;
+    double balance;
+    float rate;
+    int term;
 };
 
 bool parseLine(const string& line, Account& acc) {
     stringstream ss(line);
     string f[7];
     for (int i = 0; i < 7; i++) {
-        if (!getline(ss, f[i], ';')) return false;   
+        if (!getline(ss, f[i], ';')) return false;
     }
     try {
         acc.id = stoi(f[0]);
@@ -31,7 +31,7 @@ bool parseLine(const string& line, Account& acc) {
         acc.rate = stof(f[5]);
         acc.term = stoi(f[6]);
     } catch (...) {
-        return false;                                 
+        return false;
     }
     return true;
 }
@@ -43,19 +43,17 @@ Account* readFromFile(const string& filename, int& n) {
         cout << "Файл " << filename << " не найден!" << endl;
         return nullptr;
     }
-    
     string line;
     int lines = 0;
     while (getline(fin, line)) {
-        if (!line.empty() && line.back() == '\r') line.pop_back();  
+        if (!line.empty() && line.back() == '\r') line.pop_back();
         if (!line.empty()) lines++;
     }
     if (lines == 0) {
         cout << "Файл пустой." << endl;
         return nullptr;
     }
-    Account* arr = new Account[lines];   
-
+    Account* arr = new Account[lines];
     fin.clear();
     fin.seekg(0);
     int lineNum = 0;
@@ -103,15 +101,160 @@ void printTable(const Account* arr, int n) {
     }
 }
 
+string readLine(const string& prompt) {
+    cout << prompt;
+    string s;
+    getline(cin, s);
+    if (!s.empty() && s.back() == '\r') s.pop_back();
+    return s;
+}
+
+int readInt(const string& prompt) {
+    while (true) {
+        string s = readLine(prompt);
+        try {
+            size_t pos;
+            int x = stoi(s, &pos);
+            if (pos == s.size()) return x;
+        } catch (...) {}
+        cout << "Нужно целое число, попробуйте ещё раз." << endl;
+    }
+}
+
+double readDouble(const string& prompt) {
+    while (true) {
+        string s = readLine(prompt);
+        try {
+            size_t pos;
+            double x = stod(s, &pos);
+            if (pos == s.size()) return x;
+        } catch (...) {}
+        cout << "Нужно число (дробная часть через точку), попробуйте ещё раз." << endl;
+    }
+}
+
+int findById(const Account* arr, int n, int id) {
+    for (int i = 0; i < n; i++) {
+        if (arr[i].id == id) return i;
+    }
+    return -1;
+}
+
+void editAccount(Account* arr, int n) {
+    int id = readInt("Введите ID счёта для изменения: ");
+    int i = findById(arr, n, id);
+    if (i == -1) {
+        cout << "Счёт с ID " << id << " не найден." << endl;
+        return;
+    }
+    cout << "Enter - оставить как было." << endl;
+    string s;
+
+    s = readLine("Владелец [" + arr[i].owner + "]: ");
+    if (!s.empty()) arr[i].owner = s;
+
+    s = readLine("Тип [" + arr[i].type + "]: ");
+    if (!s.empty()) arr[i].type = s;
+
+    s = readLine("Валюта [" + arr[i].currency + "]: ");
+    if (!s.empty()) arr[i].currency = s;
+
+    s = readLine("Баланс [" + to_string(arr[i].balance) + "]: ");
+    if (!s.empty()) {
+        try { arr[i].balance = stod(s); } catch (...) { cout << "Неверное число, баланс не изменён." << endl; }
+    }
+
+    s = readLine("Ставка % [" + to_string(arr[i].rate) + "]: ");
+    if (!s.empty()) {
+        try { arr[i].rate = stof(s); } catch (...) { cout << "Неверное число, ставка не изменена." << endl; }
+    }
+
+    s = readLine("Срок, мес. [" + to_string(arr[i].term) + "]: ");
+    if (!s.empty()) {
+        try { arr[i].term = stoi(s); } catch (...) { cout << "Неверное число, срок не изменён." << endl; }
+    }
+    cout << "Счёт " << id << " изменён." << endl;
+}
+
+void addAccount(Account*& arr, int& n) {
+    int newId = 1;
+    for (int i = 0; i < n; i++) {
+        if (arr[i].id >= newId) newId = arr[i].id + 1;
+    }
+
+    Account acc;
+    acc.id = newId;
+    acc.owner    = readLine("Владелец (латиницей): ");
+    acc.type     = readLine("Тип (Deposit/Credit/Current): ");
+    acc.currency = readLine("Валюта (RUB/USD/EUR): ");
+    acc.balance  = readDouble("Баланс: ");
+    acc.rate     = (float)readDouble("Ставка, %: ");
+    acc.term     = readInt("Срок, мес.: ");
+
+    Account* bigger = new Account[n + 1];
+    for (int i = 0; i < n; i++) bigger[i] = arr[i];
+    bigger[n] = acc;
+
+    delete[] arr;
+    arr = bigger;
+    n++;
+    cout << "Счёт добавлен, ID = " << newId << endl;
+}
+
+void deleteAccount(Account*& arr, int& n) {
+    int id = readInt("Введите ID счёта для удаления: ");
+    int k = findById(arr, n, id);
+    if (k == -1) {
+        cout << "Счёт с ID " << id << " не найден." << endl;
+        return;
+    }
+    if (n == 1) {
+        delete[] arr;
+        arr = nullptr;
+        n = 0;
+        cout << "Счёт удалён, записей не осталось." << endl;
+        return;
+    }
+    Account* smaller = new Account[n - 1];
+    int j = 0;
+    for (int i = 0; i < n; i++) {
+        if (i != k) smaller[j++] = arr[i];
+    }
+    delete[] arr;
+    arr = smaller;
+    n--;
+    cout << "Счёт " << id << " удалён." << endl;
+}
+
 int main() {
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 
     int n = 0;
     Account* accounts = readFromFile("data.txt", n);
-    printTable(accounts, n);
 
-    delete[] accounts;   
-    accounts = nullptr;
-    return 0;
+    while (true) {
+        cout << endl
+             << "===== Банковские счета =====" << endl
+             << "1. Просмотр" << endl
+             << "2. Изменить запись" << endl
+             << "3. Добавить запись" << endl
+             << "4. Удалить запись" << endl
+             << "0. Выход" << endl;
+        int choice = readInt("Ваш выбор: ");
+
+        switch (choice) {
+            case 1: printTable(accounts, n); break;
+            case 2: editAccount(accounts, n); break;
+            case 3: addAccount(accounts, n); break;
+            case 4: deleteAccount(accounts, n); break;
+            case 0:
+                delete[] accounts;
+                accounts = nullptr;
+                cout << "До свидания!" << endl;
+                return 0;
+            default:
+                cout << "Нет такого пункта." << endl;
+        }
+    }
 }

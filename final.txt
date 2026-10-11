@@ -1,0 +1,6 @@
+1;Ivanov I.I.;Deposit;RUB;150000.00;12.50;12
+2;Petrova P.P.;Current;RUB;23500.50;0.00;0
+3;Sidorov S.S.;Deposit;USD;3000.00;3.20;24
+4;Kuznetsova K.K.;Credit;RUB;-80000000.00;18.90;36
+5;Smirnov S.S.;Deposit;EUR;5000.00;2.80;6
+6;Volkova V.V.;Current;USD;1200.00;0.00;0

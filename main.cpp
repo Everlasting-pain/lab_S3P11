@@ -276,6 +276,7 @@ void saveToFile(const Account* arr, int n) {
         cout << "Не удалось создать файл " << filename << endl;
         return;
     }
+    fout << fixed << setprecision(2);
     for (int i = 0; i < n; i++) {
         fout << arr[i].id << ';'
              << arr[i].owner << ';'
